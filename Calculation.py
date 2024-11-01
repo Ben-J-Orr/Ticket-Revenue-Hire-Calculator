@@ -5,20 +5,20 @@ from datetime import date
 from fpdf import FPDF
 import tempfile
 
-def calculate_revenue(num_online_tickets: int, online_ticket_price: float, num_door_tickets: int, door_ticket_price: float, venue_hire_percent: float = 0.2):
+def calculate_revenue(num_online_tickets: int, online_ticket_price: float, num_door_tickets: int, door_ticket_price: float, artist_cost_per_ticket: float, venue_hire_percent: float = 0.2):
     online_sales_revenue = num_online_tickets * online_ticket_price
     door_sales_revenue = num_door_tickets * door_ticket_price
     total_ticket_revenue = online_sales_revenue + door_sales_revenue
-    total_ticket_hire = (num_online_tickets + num_door_tickets) * 2
+    total_ticket_hire = (num_online_tickets + num_door_tickets) * artist_cost_per_ticket
     total_venue_hire = max((total_ticket_revenue - total_ticket_hire) * venue_hire_percent, 100)
     total_bacs_payment = total_ticket_hire + total_venue_hire
     return online_sales_revenue, door_sales_revenue, total_ticket_revenue, total_ticket_hire, total_venue_hire, total_bacs_payment
 
-def generate_pdf(act_name, date_of_performance, door_person, sound_engineer, num_online_tickets, num_door_tickets, total_tickets_sold, online_sales_revenue, door_sales_revenue, total_ticket_revenue, total_ticket_hire, total_venue_hire, total_bacs_payment):
+def generate_pdf(act_name, date_of_performance, door_person, sound_engineer, num_online_tickets, num_door_tickets, total_tickets_sold, online_sales_revenue, door_sales_revenue, total_ticket_revenue, total_ticket_hire, total_venue_hire, total_bacs_payment, artist_cost_per_ticket):
     pdf = FPDF()
     pdf.add_page()
     pdf.set_font("Arial", 'B', 16)
-    pdf.cell(0, 10, txt="Gig Details & Calculated Costs", ln=True, align='L')
+    pdf.cell(0, 10, txt="Gig Details & Calculated Costs", ln=True, align='C')
     pdf.ln(10)
 
     pdf.set_font("Arial", 'B', 14)
@@ -41,6 +41,7 @@ def generate_pdf(act_name, date_of_performance, door_person, sound_engineer, num
     pdf.set_font("Arial", 'B', 14)
     pdf.cell(0, 10, txt="Hire and BACs Payment", ln=True, align='L')
     pdf.set_font("Arial", size=12)
+    pdf.cell(0, 10, txt=f"Artist Cost per Ticket: £{artist_cost_per_ticket:.2f}", ln=True)
     pdf.cell(0, 10, txt=f"Total Ticket Hire: £{total_ticket_hire:.2f}", ln=True)
     pdf.cell(0, 10, txt=f"Total Venue Hire: £{total_venue_hire:.2f}", ln=True)
     pdf.cell(0, 10, txt=f"Total BACs Payment: £{total_bacs_payment:.2f}", ln=True)
@@ -62,6 +63,7 @@ num_online_tickets = st.sidebar.number_input("Number of Online Tickets Sold:", m
 online_ticket_price = st.sidebar.number_input("Online Ticket Price (£):", min_value=0.0, value=10.0, step=0.5)
 num_door_tickets = st.sidebar.number_input("Number of Door Tickets Sold:", min_value=0, value=0, step=1)
 door_ticket_price = st.sidebar.number_input("Door Ticket Price (£):", min_value=0.0, value=10.0, step=0.5)
+artist_cost_per_ticket = st.sidebar.number_input("Artist Cost per Ticket (£):", min_value=0.0, value=2.0, step=0.5)
 venue_hire_percent = st.sidebar.slider("Venue Hire Percentage (Default 20%):", min_value=0, max_value=100, value=20) / 100
 
 if st.sidebar.button("Calculate Revenue"):
@@ -75,7 +77,7 @@ if st.sidebar.button("Calculate Revenue"):
         st.sidebar.error("Please enter the number of tickets sold (at least one).")
     else:
         online_sales_revenue, door_sales_revenue, total_ticket_revenue, total_ticket_hire, total_venue_hire, total_bacs_payment = calculate_revenue(
-            num_online_tickets, online_ticket_price, num_door_tickets, door_ticket_price, venue_hire_percent
+            num_online_tickets, online_ticket_price, num_door_tickets, door_ticket_price, artist_cost_per_ticket, venue_hire_percent
         )
         total_tickets_sold = num_online_tickets + num_door_tickets
 
@@ -92,6 +94,7 @@ if st.sidebar.button("Calculate Revenue"):
         st.session_state['num_online_tickets'] = num_online_tickets
         st.session_state['num_door_tickets'] = num_door_tickets
         st.session_state['total_tickets_sold'] = total_tickets_sold
+        st.session_state['artist_cost_per_ticket'] = artist_cost_per_ticket
 
 if 'act_name' in st.session_state:
     st.markdown('## Act Details')
@@ -110,6 +113,7 @@ if 'act_name' in st.session_state:
     st.markdown("---")
 
     st.markdown('## Hire and BACs Payment')
+    st.markdown(f'**Artist Cost per Ticket:** `£{st.session_state["artist_cost_per_ticket"]:.2f}`')
     st.markdown(f'**Total Ticket Hire:** `£{st.session_state["total_ticket_hire"]:.2f}`')
     st.markdown(f'**Total Venue Hire:** `£{st.session_state["total_venue_hire"]:.2f}`')
     st.markdown(f'**Total BACs Payment:** `£{st.session_state["total_bacs_payment"]:.2f}`')
@@ -120,7 +124,8 @@ if 'act_name' in st.session_state:
         st.session_state['act_name'], st.session_state['date_of_performance'], st.session_state['door_person'], st.session_state['sound_engineer'],
         st.session_state['num_online_tickets'], st.session_state['num_door_tickets'], st.session_state['total_tickets_sold'],
         st.session_state['online_sales_revenue'], st.session_state['door_sales_revenue'], st.session_state['total_ticket_revenue'],
-        st.session_state['total_ticket_hire'], st.session_state['total_venue_hire'], st.session_state['total_bacs_payment']
+        st.session_state['total_ticket_hire'], st.session_state['total_venue_hire'], st.session_state['total_bacs_payment'],
+        st.session_state['artist_cost_per_ticket']
     )
     temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
     pdf.output(temp_file.name)
