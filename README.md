@@ -48,10 +48,6 @@ The generated PDF report includes:
 
 The report is automatically named based on the Act Name and the Date of Performance for easy identification.
 
-## Example 📷
-
-
-
 ## Important Notes ⚠️
 
 - If the calculated venue hire is below £100, a note is added stating that the minimum venue hire of £100 has been applied.
