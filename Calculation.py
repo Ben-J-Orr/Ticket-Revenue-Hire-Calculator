@@ -14,6 +14,51 @@ def calculate_revenue(num_online_tickets: int, online_ticket_price: float, num_d
     total_bacs_payment = total_ticket_hire + total_venue_hire
     return online_sales_revenue, door_sales_revenue, total_ticket_revenue, total_ticket_hire, total_venue_hire, total_bacs_payment
 
+def generate_pdf(act_name, date_of_performance, door_person, sound_engineer, num_online_tickets, num_door_tickets, total_tickets_sold, online_sales_revenue, door_sales_revenue, total_ticket_revenue, total_ticket_hire, total_venue_hire, total_bacs_payment):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", 'B', 16)
+    pdf.cell(0, 10, txt="Gig Details & Calculated Costs", ln=True, align='C')
+    pdf.ln(10)
+
+    pdf.set_font("Arial", 'B', 14)
+    pdf.cell(0, 10, txt="Act Details", ln=True, align='L')
+    pdf.set_font("Arial", size=12)
+    pdf.cell(0, 10, txt=f"Act Name: {act_name}", ln=True)
+    pdf.cell(0, 10, txt=f"Date of Performance: {date_of_performance.strftime('%d/%m/%Y')}", ln=True)
+    pdf.cell(0, 10, txt=f"Door Person: {door_person}", ln=True)
+    pdf.cell(0, 10, txt=f"Sound Engineer: {sound_engineer}", ln=True)
+    pdf.ln(10)
+
+    pdf.set_font("Arial", 'B', 14)
+    pdf.cell(0, 10, txt="Ticket Sales Breakdown", ln=True, align='L')
+    pdf.set_font("Arial", size=12)
+    pdf.cell(0, 10, txt=f"Number of Online Tickets Sold: {num_online_tickets}", ln=True)
+    pdf.cell(0, 10, txt=f"Number of Door Tickets Sold: {num_door_tickets}", ln=True)
+    pdf.cell(0, 10, txt=f"Total Tickets Sold: {total_tickets_sold}", ln=True)
+    pdf.ln(10)
+
+    pdf.set_font("Arial", 'B', 14)
+    pdf.cell(0, 10, txt="Revenue Breakdown", ln=True, align='L')
+    pdf.set_font("Arial", size=12)
+    pdf.cell(0, 10, txt=f"Total Online Ticket Revenue: £{online_sales_revenue:.2f}", ln=True)
+    pdf.cell(0, 10, txt=f"Total Door Ticket Revenue: £{door_sales_revenue:.2f}", ln=True)
+    pdf.cell(0, 10, txt=f"Total Sales (Both Online and Door): £{total_ticket_revenue:.2f}", ln=True)
+    pdf.ln(10)
+
+    pdf.set_font("Arial", 'B', 14)
+    pdf.cell(0, 10, txt="Hire and BACs Payment", ln=True, align='L')
+    pdf.set_font("Arial", size=12)
+    pdf.cell(0, 10, txt=f"Total Ticket Hire: £{total_ticket_hire:.2f}", ln=True)
+    pdf.cell(0, 10, txt=f"Total Venue Hire: £{total_venue_hire:.2f}", ln=True)
+    pdf.cell(0, 10, txt=f"Total BACs Payment: £{total_bacs_payment:.2f}", ln=True)
+    if total_venue_hire == 100:
+        pdf.set_text_color(255, 0, 0)
+        pdf.multi_cell(0, 10, txt="Note: The minimum venue hire of £100 has been applied because the calculated value was below this threshold.")
+        pdf.set_text_color(0, 0, 0)
+
+    return pdf
+
 st.set_page_config(page_title="Ticket Revenue & Hire Calculator", layout="wide")
 
 st.sidebar.header("Enter Gig Details")
@@ -40,22 +85,30 @@ if st.sidebar.button("Calculate Revenue"):
         online_sales_revenue, door_sales_revenue, total_ticket_revenue, total_ticket_hire, total_venue_hire, total_bacs_payment = calculate_revenue(
             num_online_tickets, online_ticket_price, num_door_tickets, door_ticket_price, venue_hire_percent
         )
-        
+        total_tickets_sold = num_online_tickets + num_door_tickets
+
         st.markdown('## Act Details')
         st.markdown(f'**Act Name:** `{act_name}`')
         st.markdown(f'**Date of Performance:** `{date_of_performance.strftime("%d/%m/%Y")}`')
         st.markdown(f'**Door Person:** `{door_person}`')
         st.markdown(f'**Sound Engineer:** `{sound_engineer}`')
-        
+
         st.markdown("---")
-        
+
+        st.markdown('## Ticket Sales Breakdown')
+        st.markdown(f'**Number of Online Tickets Sold:** `{num_online_tickets}`')
+        st.markdown(f'**Number of Door Tickets Sold:** `{num_door_tickets}`')
+        st.markdown(f'**Total Tickets Sold:** `{total_tickets_sold}`')
+
+        st.markdown("---")
+
         st.markdown('## Revenue Breakdown')
         st.markdown(f'**Total Online Ticket Revenue:** `£{online_sales_revenue:.2f}`')
         st.markdown(f'**Total Door Ticket Revenue:** `£{door_sales_revenue:.2f}`')
         st.markdown(f'**Total Sales (Both Online and Door):** `£{total_ticket_revenue:.2f}`')
-        
+
         st.markdown("---")
-        
+
         st.markdown('## Hire and BACs Payment')
         st.markdown(f'**Total Ticket Hire:** `£{total_ticket_hire:.2f}`')
         st.markdown(f'**Total Venue Hire:** `£{total_venue_hire:.2f}`')
@@ -63,40 +116,7 @@ if st.sidebar.button("Calculate Revenue"):
         if total_venue_hire == 100:
             st.markdown(':orange[Note: The minimum venue hire of £100 has been applied because the calculated value was below this threshold.]')
 
-        pdf = FPDF()
-        pdf.add_page()
-        pdf.set_font("Arial", 'B', 16)
-        pdf.cell(0, 10, txt="Gig Details & Calculated Costs", ln=True, align='C')
-        pdf.ln(10)
-
-        pdf.set_font("Arial", 'B', 14)
-        pdf.cell(0, 10, txt="Act Details", ln=True, align='L')
-        pdf.set_font("Arial", size=12)
-        pdf.cell(0, 10, txt=f"Act Name: {act_name}", ln=True)
-        pdf.cell(0, 10, txt=f"Date of Performance: {date_of_performance.strftime('%d/%m/%Y')}", ln=True)
-        pdf.cell(0, 10, txt=f"Door Person: {door_person}", ln=True)
-        pdf.cell(0, 10, txt=f"Sound Engineer: {sound_engineer}", ln=True)
-        pdf.ln(10)
-
-        pdf.set_font("Arial", 'B', 14)
-        pdf.cell(0, 10, txt="Revenue Breakdown", ln=True, align='L')
-        pdf.set_font("Arial", size=12)
-        pdf.cell(0, 10, txt=f"Total Online Ticket Revenue: £{online_sales_revenue:.2f}", ln=True)
-        pdf.cell(0, 10, txt=f"Total Door Ticket Revenue: £{door_sales_revenue:.2f}", ln=True)
-        pdf.cell(0, 10, txt=f"Total Sales (Both Online and Door): £{total_ticket_revenue:.2f}", ln=True)
-        pdf.ln(10)
-
-        pdf.set_font("Arial", 'B', 14)
-        pdf.cell(0, 10, txt="Hire and BACs Payment", ln=True, align='L')
-        pdf.set_font("Arial", size=12)
-        pdf.cell(0, 10, txt=f"Total Ticket Hire: £{total_ticket_hire:.2f}", ln=True)
-        pdf.cell(0, 10, txt=f"Total Venue Hire: £{total_venue_hire:.2f}", ln=True)
-        pdf.cell(0, 10, txt=f"Total BACs Payment: £{total_bacs_payment:.2f}", ln=True)
-        if total_venue_hire == 100:
-            pdf.set_text_color(255, 0, 0)
-            pdf.multi_cell(0, 10, txt="Note: The minimum venue hire of £100 has been applied because the calculated value was below this threshold.")
-            pdf.set_text_color(0, 0, 0)
-
+        pdf = generate_pdf(act_name, date_of_performance, door_person, sound_engineer, num_online_tickets, num_door_tickets, total_tickets_sold, online_sales_revenue, door_sales_revenue, total_ticket_revenue, total_ticket_hire, total_venue_hire, total_bacs_payment)
         temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
         pdf.output(temp_file.name)
 
