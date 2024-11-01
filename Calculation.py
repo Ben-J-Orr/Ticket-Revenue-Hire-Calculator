@@ -18,7 +18,7 @@ def generate_pdf(act_name, date_of_performance, door_person, sound_engineer, num
     pdf = FPDF()
     pdf.add_page()
     pdf.set_font("Arial", 'B', 16)
-    pdf.cell(0, 10, txt="Gig Details & Calculated Costs", ln=True, align='C')
+    pdf.cell(0, 10, txt="Gig Details & Calculated Costs", ln=True, align='L')
     pdf.ln(10)
 
     pdf.set_font("Arial", 'B', 14)
@@ -31,19 +31,11 @@ def generate_pdf(act_name, date_of_performance, door_person, sound_engineer, num
     pdf.ln(10)
 
     pdf.set_font("Arial", 'B', 14)
-    pdf.cell(0, 10, txt="Ticket Sales Breakdown", ln=True, align='L')
-    pdf.set_font("Arial", size=12)
-    pdf.cell(0, 10, txt=f"Number of Online Tickets Sold: {num_online_tickets}", ln=True)
-    pdf.cell(0, 10, txt=f"Number of Door Tickets Sold: {num_door_tickets}", ln=True)
-    pdf.cell(0, 10, txt=f"Total Tickets Sold: {total_tickets_sold}", ln=True)
-    pdf.ln(10)
-
-    pdf.set_font("Arial", 'B', 14)
     pdf.cell(0, 10, txt="Revenue Breakdown", ln=True, align='L')
     pdf.set_font("Arial", size=12)
-    pdf.cell(0, 10, txt=f"Total Online Ticket Revenue: £{online_sales_revenue:.2f}", ln=True)
-    pdf.cell(0, 10, txt=f"Total Door Ticket Revenue: £{door_sales_revenue:.2f}", ln=True)
-    pdf.cell(0, 10, txt=f"Total Sales (Both Online and Door): £{total_ticket_revenue:.2f}", ln=True)
+    pdf.cell(0, 10, txt=f"Online Ticket Revenue: £{online_sales_revenue:.2f} (Tickets Sold: {num_online_tickets})", ln=True)
+    pdf.cell(0, 10, txt=f"Door Ticket Revenue: £{door_sales_revenue:.2f} (Tickets Sold: {num_door_tickets})", ln=True)
+    pdf.cell(0, 10, txt=f"Total Ticket Revenue: £{total_ticket_revenue:.2f} (Total Tickets Sold: {total_tickets_sold})", ln=True)
     pdf.ln(10)
 
     pdf.set_font("Arial", 'B', 14)
@@ -87,40 +79,53 @@ if st.sidebar.button("Calculate Revenue"):
         )
         total_tickets_sold = num_online_tickets + num_door_tickets
 
-        st.markdown('## Act Details')
-        st.markdown(f'**Act Name:** `{act_name}`')
-        st.markdown(f'**Date of Performance:** `{date_of_performance.strftime("%d/%m/%Y")}`')
-        st.markdown(f'**Door Person:** `{door_person}`')
-        st.markdown(f'**Sound Engineer:** `{sound_engineer}`')
+        st.session_state['act_name'] = act_name
+        st.session_state['date_of_performance'] = date_of_performance
+        st.session_state['door_person'] = door_person
+        st.session_state['sound_engineer'] = sound_engineer
+        st.session_state['online_sales_revenue'] = online_sales_revenue
+        st.session_state['door_sales_revenue'] = door_sales_revenue
+        st.session_state['total_ticket_revenue'] = total_ticket_revenue
+        st.session_state['total_ticket_hire'] = total_ticket_hire
+        st.session_state['total_venue_hire'] = total_venue_hire
+        st.session_state['total_bacs_payment'] = total_bacs_payment
+        st.session_state['num_online_tickets'] = num_online_tickets
+        st.session_state['num_door_tickets'] = num_door_tickets
+        st.session_state['total_tickets_sold'] = total_tickets_sold
 
-        st.markdown("---")
+if 'act_name' in st.session_state:
+    st.markdown('## Act Details')
+    st.markdown(f'**Act Name:** `{st.session_state["act_name"]}`')
+    st.markdown(f'**Date of Performance:** `{st.session_state["date_of_performance"].strftime("%d/%m/%Y")}`')
+    st.markdown(f'**Door Person:** `{st.session_state["door_person"]}`')
+    st.markdown(f'**Sound Engineer:** `{st.session_state["sound_engineer"]}`')
 
-        st.markdown('## Ticket Sales Breakdown')
-        st.markdown(f'**Number of Online Tickets Sold:** `{num_online_tickets}`')
-        st.markdown(f'**Number of Door Tickets Sold:** `{num_door_tickets}`')
-        st.markdown(f'**Total Tickets Sold:** `{total_tickets_sold}`')
+    st.markdown("---")
 
-        st.markdown("---")
+    st.markdown('## Revenue Breakdown')
+    st.markdown(f'**Online Ticket Revenue:** `£{st.session_state["online_sales_revenue"]:.2f}` (Tickets Sold: `{st.session_state["num_online_tickets"]}`)')
+    st.markdown(f'**Door Ticket Revenue:** `£{st.session_state["door_sales_revenue"]:.2f}` (Tickets Sold: `{st.session_state["num_door_tickets"]}`)')
+    st.markdown(f'**Total Ticket Revenue:** `£{st.session_state["total_ticket_revenue"]:.2f}` (Total Tickets Sold: `{st.session_state["total_tickets_sold"]}`)')
 
-        st.markdown('## Revenue Breakdown')
-        st.markdown(f'**Total Online Ticket Revenue:** `£{online_sales_revenue:.2f}`')
-        st.markdown(f'**Total Door Ticket Revenue:** `£{door_sales_revenue:.2f}`')
-        st.markdown(f'**Total Sales (Both Online and Door):** `£{total_ticket_revenue:.2f}`')
+    st.markdown("---")
 
-        st.markdown("---")
+    st.markdown('## Hire and BACs Payment')
+    st.markdown(f'**Total Ticket Hire:** `£{st.session_state["total_ticket_hire"]:.2f}`')
+    st.markdown(f'**Total Venue Hire:** `£{st.session_state["total_venue_hire"]:.2f}`')
+    st.markdown(f'**Total BACs Payment:** `£{st.session_state["total_bacs_payment"]:.2f}`')
+    if st.session_state['total_venue_hire'] == 100:
+        st.markdown(':orange[Note: The minimum venue hire of £100 has been applied because the calculated value was below this threshold.]')
 
-        st.markdown('## Hire and BACs Payment')
-        st.markdown(f'**Total Ticket Hire:** `£{total_ticket_hire:.2f}`')
-        st.markdown(f'**Total Venue Hire:** `£{total_venue_hire:.2f}`')
-        st.markdown(f'**Total BACs Payment:** `£{total_bacs_payment:.2f}`')
-        if total_venue_hire == 100:
-            st.markdown(':orange[Note: The minimum venue hire of £100 has been applied because the calculated value was below this threshold.]')
+    pdf = generate_pdf(
+        st.session_state['act_name'], st.session_state['date_of_performance'], st.session_state['door_person'], st.session_state['sound_engineer'],
+        st.session_state['num_online_tickets'], st.session_state['num_door_tickets'], st.session_state['total_tickets_sold'],
+        st.session_state['online_sales_revenue'], st.session_state['door_sales_revenue'], st.session_state['total_ticket_revenue'],
+        st.session_state['total_ticket_hire'], st.session_state['total_venue_hire'], st.session_state['total_bacs_payment']
+    )
+    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
+    pdf.output(temp_file.name)
 
-        pdf = generate_pdf(act_name, date_of_performance, door_person, sound_engineer, num_online_tickets, num_door_tickets, total_tickets_sold, online_sales_revenue, door_sales_revenue, total_ticket_revenue, total_ticket_hire, total_venue_hire, total_bacs_payment)
-        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
-        pdf.output(temp_file.name)
-
-        with open(temp_file.name, "rb") as pdf_file:
-            st.download_button(label="Download PDF", data=pdf_file.read(), file_name=f"{act_name}_{date_of_performance.strftime('%Y-%m-%d')}.pdf", mime="application/pdf")
+    with open(temp_file.name, "rb") as pdf_file:
+        st.download_button(label="Download PDF", data=pdf_file.read(), file_name=f"{st.session_state['act_name']}_{st.session_state['date_of_performance'].strftime('%Y-%m-%d')}.pdf", mime="application/pdf")
 
 # To run this code, save it in a Python (.py) file and run `streamlit run filename.py` in the terminal.
