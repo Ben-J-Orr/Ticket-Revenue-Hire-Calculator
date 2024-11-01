@@ -18,7 +18,7 @@ def generate_pdf(act_name, date_of_performance, door_person, sound_engineer, num
     pdf = FPDF()
     pdf.add_page()
     pdf.set_font("Arial", 'B', 16)
-    pdf.cell(0, 10, txt="Gig Details & Calculated Costs", ln=True, align='C')
+    pdf.cell(0, 10, txt="Gig Details & Calculated Costs", ln=True, align='L')
     pdf.ln(10)
 
     pdf.set_font("Arial", 'B', 14)
