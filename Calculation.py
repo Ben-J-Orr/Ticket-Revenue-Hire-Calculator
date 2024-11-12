@@ -1,9 +1,8 @@
 import streamlit as st
-import pandas as pd
-import numpy as np
 from datetime import date
 from fpdf import FPDF
 import tempfile
+import re
 
 def calculate_revenue(num_online_tickets: int, online_ticket_price: float, num_door_tickets: int, door_ticket_price: float, artist_cost_per_ticket: float, venue_hire_percent: float = 0.2):
     online_sales_revenue = num_online_tickets * online_ticket_price
@@ -52,6 +51,23 @@ def generate_pdf(act_name, date_of_performance, door_person, sound_engineer, num
 
     return pdf
 
+# Initialize session state variables to prevent KeyError
+if 'act_name' not in st.session_state:
+    st.session_state['act_name'] = ''
+    st.session_state['date_of_performance'] = date.today()
+    st.session_state['door_person'] = ''
+    st.session_state['sound_engineer'] = ''
+    st.session_state['online_sales_revenue'] = 0.0
+    st.session_state['door_sales_revenue'] = 0.0
+    st.session_state['total_ticket_revenue'] = 0.0
+    st.session_state['total_ticket_hire'] = 0.0
+    st.session_state['total_venue_hire'] = 0.0
+    st.session_state['total_bacs_payment'] = 0.0
+    st.session_state['num_online_tickets'] = 0
+    st.session_state['num_door_tickets'] = 0
+    st.session_state['total_tickets_sold'] = 0
+    st.session_state['artist_cost_per_ticket'] = 0.0
+
 st.set_page_config(page_title="Ticket Revenue & Hire Calculator", layout="wide")
 
 st.sidebar.header("Enter Gig Details")
@@ -96,7 +112,9 @@ if st.sidebar.button("Calculate Revenue"):
         st.session_state['total_tickets_sold'] = total_tickets_sold
         st.session_state['artist_cost_per_ticket'] = artist_cost_per_ticket
 
-if 'act_name' in st.session_state:
+        st.success("Revenue calculated successfully!")
+
+if st.session_state['act_name']:
     st.markdown('## Act Details')
     st.markdown(f'**Act Name:** `{st.session_state["act_name"]}`')
     st.markdown(f'**Date of Performance:** `{st.session_state["date_of_performance"].strftime("%d/%m/%Y")}`')
@@ -118,8 +136,9 @@ if 'act_name' in st.session_state:
     st.markdown(f'**Total Venue Hire:** `£{st.session_state["total_venue_hire"]:.2f}`')
     st.markdown(f'**Total BACs Payment:** `£{st.session_state["total_bacs_payment"]:.2f}`')
     if st.session_state['total_venue_hire'] == 100:
-        st.markdown(':orange[Note: The minimum venue hire of £100 has been applied because the calculated value was below this threshold.]')
+        st.markdown(':red[Note: The minimum venue hire of £100 has been applied because the calculated value was below this threshold.]')
 
+    # Generate PDF
     pdf = generate_pdf(
         st.session_state['act_name'], st.session_state['date_of_performance'], st.session_state['door_person'], st.session_state['sound_engineer'],
         st.session_state['num_online_tickets'], st.session_state['num_door_tickets'], st.session_state['total_tickets_sold'],
@@ -127,10 +146,17 @@ if 'act_name' in st.session_state:
         st.session_state['total_ticket_hire'], st.session_state['total_venue_hire'], st.session_state['total_bacs_payment'],
         st.session_state['artist_cost_per_ticket']
     )
-    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
-    pdf.output(temp_file.name)
 
-    with open(temp_file.name, "rb") as pdf_file:
-        st.download_button(label="Download PDF", data=pdf_file.read(), file_name=f"{st.session_state['act_name']}_{st.session_state['date_of_performance'].strftime('%Y-%m-%d')}.pdf", mime="application/pdf")
+    # Sanitize file name
+    sanitized_act_name = re.sub(r'[\\/*?:"<>|]', "", st.session_state['act_name'])
+    file_name = f"{sanitized_act_name}_{st.session_state['date_of_performance'].strftime('%Y-%m-%d')}.pdf"
 
-# To run this code, save it in a Python (.py) file and run `streamlit run filename.py` in the terminal.
+    with tempfile.NamedTemporaryFile(delete=True, suffix=".pdf") as temp_file:
+        pdf.output(temp_file.name)
+        with open(temp_file.name, "rb") as pdf_file:
+            st.download_button(
+                label="Download PDF",
+                data=pdf_file.read(),
+                file_name=file_name,
+                mime="application/pdf"
+            )
